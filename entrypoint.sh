@@ -2,7 +2,9 @@
 set -e
 
 # Restore session from URL if OPENCLAW_RESTORE_URL is set
-if [ -n "$OPENCLAW_RESTORE_URL" ] && [ ! -f "$OPENCLAW_STATE_DIR/.restored" ]; then
+# Use hash of URL as marker so changing URL triggers new restore
+RESTORE_MARKER="$OPENCLAW_STATE_DIR/.restored-$(echo -n "$OPENCLAW_RESTORE_URL" | md5sum | cut -d' ' -f1)"
+if [ -n "$OPENCLAW_RESTORE_URL" ] && [ ! -f "$RESTORE_MARKER" ]; then
   echo "[restore] Downloading session from $OPENCLAW_RESTORE_URL..."
 
   # Create state directory if it doesn't exist
@@ -26,8 +28,8 @@ if [ -n "$OPENCLAW_RESTORE_URL" ] && [ ! -f "$OPENCLAW_STATE_DIR/.restored" ]; t
     echo "[restore] Preserved existing openclaw.json config"
   fi
 
-  # Mark as restored
-  touch "$OPENCLAW_STATE_DIR/.restored"
+  # Mark as restored (with URL-specific marker)
+  touch "$RESTORE_MARKER"
 
   # Cleanup
   rm -f /tmp/restore.zip /tmp/openclaw.json.backup
