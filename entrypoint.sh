@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 # Restore session from URL if OPENCLAW_RESTORE_URL is set
 # Use hash of URL as marker so changing URL triggers new restore
@@ -18,9 +17,15 @@ if [ -n "$OPENCLAW_RESTORE_URL" ] && [ ! -f "$RESTORE_MARKER" ]; then
   # Download and extract
   curl -sL "$OPENCLAW_RESTORE_URL" -o /tmp/restore.zip
 
-  # Unzip to state directory (overwrite existing files, but quietly)
+  # Unzip to state directory (overwrite existing files, convert backslashes)
   cd "$OPENCLAW_STATE_DIR"
-  unzip -o -q /tmp/restore.zip
+  echo "[restore] Extracting to $OPENCLAW_STATE_DIR..."
+  # Try with backslash conversion first, fallback to normal unzip
+  if ! unzip -o -: /tmp/restore.zip 2>/dev/null; then
+    echo "[restore] Fallback to standard unzip..."
+    unzip -o /tmp/restore.zip
+  fi
+  echo "[restore] Extraction complete."
 
   # Restore the original openclaw.json (don't use the one from backup)
   if [ -f /tmp/openclaw.json.backup ]; then
